@@ -4,35 +4,36 @@
  * Cuts the specified text up to specified number of characters.
  * Strips any of shortcodes.
  *
- * Important changes:
- * 2.8.0 - Improved logic to work with HTML tags in cutting text.
- * 2.7.2 - Cuts direct URLs from content.
- * 2.7.0 - `sanitize_callback` parameter.
- * 2.6.5 - `ignore_more` parameter.
- * 2.6.2 - Regular to remove blocky shortcodes like: [foo]some data[/foo].
- * 2.6   - Removed the `save_format` parameter and replaced it with two parameters `autop` and `save_tags`.
+ * !IMPORTANT: This function is NOT escaped the text.
+ * Assumed the text is already escaped with wp_kses() or similar function.
  *
- * @author Kama (wp-kama.ru)
- * @version 2.8.0
+ * @version 2.8.1
+ *
+ * Important changes:
+ * v2.8.0 - Improved logic to work with HTML tags in cutting text.
+ * v2.7.2 - Cuts direct URLs from content.
+ * v2.7.0 - `sanitize_callback` parameter.
+ * v2.6.5 - `ignore_more` parameter.
+ * v2.6.2 - Regular to remove blocky shortcodes like: [foo]some data[/foo].
+ * v2.6   - Removed the `save_format` parameter and replaced it with two parameters `autop` and `save_tags`.
  *
  * @param string|array $args {
  *     Optional. Arguments to customize output.
  *
- *     @type int       $maxchar            Max number of characters.
- *     @type string    $text               The text to be cut. The default is `post_excerpt` if there is no `post_content`.
- *                                         If the text has `<!--more-->`, then `maxchar` is ignored and everything
- *                                         up to `<!--more-->` is taken including HTML.
- *     @type bool      $autop              Replace the line breaks with `<p>` and `<br>` or not?
- *     @type string    $more_text          The text of `Read more` link.
- *     @type string    $save_tags          Tags to be left in the text. For example `<strong><b><a>`.
- *     @type string    $sanitize_callback  Text cleaning function.
- *     @type bool      $ignore_more        Whether to ignore `<!--more-->` in the content.
- *
+ *     @type int     $maxchar            Max number of characters.
+ *     @type string  $text               The text to be cut. The default is `post_excerpt` if there is no `post_content`.
+ *                                       If the text has `<!--more-->`, then `maxchar` is ignored and everything
+ *                                       up to `<!--more-->` is taken including HTML.
+ *     @type bool    $autop              Replace the line breaks with `<p>` and `<br>` or not?
+ *     @type string  $more_text          The text of `Read more` link.
+ *     @type string  $save_tags          Tags to be left in the text. For example `<strong><b><a>`.
+ *     @type string  $sanitize_callback  Text cleaning function.
+ *     @type bool    $ignore_more        Whether to ignore `<!--more-->` in the content.
  * }
  *
  * @return string HTML
  */
-function kama_excerpt( $args = '' ){
+function kama_excerpt( $args = '' ): string {
 	global $post;
 
 	if( is_string( $args ) ){
@@ -43,10 +44,10 @@ function kama_excerpt( $args = '' ){
 		'maxchar'           => 350,
 		'text'              => '',
 		'autop'             => true,
-		'more_text'         => 'Читать дальше...',
+		'more_text'         => 'Reed more...',
 		'ignore_more'       => false,
 		'save_tags'         => '<strong><b><a><em><i><var><code><span>',
-		'sanitize_callback' => static function( string $text, object $rg ){
+		'sanitize_callback' => static function( string $text, object $rg ) {
 			return strip_tags( $text, $rg->save_tags );
 		},
 	], $args );
@@ -68,11 +69,8 @@ function kama_excerpt( $args = '' ){
 
 	// <!--more-->
 	if( ! $rg->ignore_more && strpos( $text, '<!--more-->' ) ){
-
 		preg_match( '/(.*)<!--more-->/s', $text, $mm );
-
 		$text = trim( $mm[1] );
-
 		$text_append = sprintf( ' <a href="%s#more-%d">%s</a>', get_permalink( $post ), $post->ID, $rg->more_text );
 	}
 	// text, excerpt, content
@@ -86,7 +84,7 @@ function kama_excerpt( $args = '' ){
 			$tags_collection = [];
 			$nn = 0;
 
-			$text = preg_replace_callback( '/<[^>]+>/', static function( $match ) use ( & $tags_collection, & $nn ){
+			$text = preg_replace_callback( '/<[^>]+>/', static function( $match ) use ( & $tags_collection, & $nn ) {
 				$nn++;
 				$holder = "~$nn";
 				$tags_collection[ $holder ] = $match[0];
@@ -112,7 +110,6 @@ function kama_excerpt( $args = '' ){
 
 	// add <p> tags. Simple analog of wpautop()
 	if( $rg->autop ){
-
 		$text = preg_replace(
 			[ "/\r/", "/\n{2,}/", "/\n/" ],
 			[ '', '</p><p>', '<br />' ],
@@ -128,3 +125,4 @@ function kama_excerpt( $args = '' ){
 
 	return $text;
 }
+
